@@ -28,6 +28,7 @@ namespace WpfApplication1.GameLogic
 
         public BoardStatuse makeMove(PlaceInformation boxInformation , out int row , out int col )
         {
+           // (board[boxInformation.BigRow, boxInformation.BigCol]).makeMove(LittleBoard.PositionOnBoard.PLAYER , boxInformation.PosRow, boxInformation.PosCol);
             row = 1;
             col = 2;
             return BoardStatuse.WIN;
