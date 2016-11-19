@@ -10,7 +10,7 @@ namespace WpfApplication1.GameLogic
         private PositionOnBoard[,] board = new PositionOnBoard[3,3];
         private List<Position> computerPosition = new List<Position>();
         private List<Position> playerPosition   = new List<Position>();
-
+        
         private bool calculate = false;
         public bool Calculate
         {
