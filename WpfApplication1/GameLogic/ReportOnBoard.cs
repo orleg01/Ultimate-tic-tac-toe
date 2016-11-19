@@ -8,17 +8,17 @@ namespace WpfApplication1.GameLogic
 {
     class ReportOnBoard
     {
-        bool gameFinish;
-        bool youWon;
+        public bool GameFinish { get; set; }
+        public bool YouWon { get; set; }
 
-        bool canWin;
-        bool canDraw;
+        public bool CanWin { get; set; }
+        public bool CanDraw { get; set; }
 
-        List<Position> oneMoveToFinish;
-        List<Position> oneMoveToBlock;
+        public List<Position> OneMoveToFinish { get; set; }
+        public List<Position> OneMoveToBlock { get; set; }
 
-        List<Position> twoWinPosability;
-        List<Position> necessaryMove;
+        public List<Position> TwoWinPosability { get; set; }
+        public List<Position> NecessaryMove { get; set; }
 
 
     }

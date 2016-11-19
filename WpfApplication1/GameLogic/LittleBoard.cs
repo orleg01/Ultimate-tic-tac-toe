@@ -10,7 +10,13 @@ namespace WpfApplication1.GameLogic
         private PositionOnBoard[,] board = new PositionOnBoard[3,3];
         private List<Position> computerPosition = new List<Position>();
         private List<Position> playerPosition   = new List<Position>();
-        
+
+        private PositionOnBoard state = PositionOnBoard.NONE;
+        public PositionOnBoard State { get; }
+
+        private int numOfSymbols = 0;
+        public bool IsEmpty { get { return numOfSymbols == 0; } }
+
         private bool calculate = false;
         public bool Calculate
         {
@@ -27,7 +33,10 @@ namespace WpfApplication1.GameLogic
                         for (int j = 0; j < 3; j++)
                         {
                             if (board[i, j] == PositionOnBoard.TEMP_PLAYER || board[i, j] == PositionOnBoard.TEMP_COMPUTER)
+                            {
+                                numOfSymbols--;
                                 board[i, j] = PositionOnBoard.NONE;
+                            }
                         }
                 }
             }
@@ -42,7 +51,13 @@ namespace WpfApplication1.GameLogic
         {
             for (int i = 0; i < board.GetLength(0); i++)
                 for (int j = 0; j < board.GetLength(1); j++)
-                    board[i, j] = PositionOnBoard.NONE;
+                {
+                    if (board[i, j] != PositionOnBoard.NONE)
+                    {
+                        board[i, j] = PositionOnBoard.NONE;
+                        numOfSymbols--;
+                    }
+                }
         }
 
         public ReportOnBoard allOptions()
@@ -79,6 +94,7 @@ namespace WpfApplication1.GameLogic
                 board[row, col] = Calculate ? 
                                     (posOnBoard == PositionOnBoard.PLAYER ? PositionOnBoard.TEMP_PLAYER : PositionOnBoard.TEMP_COMPUTER) 
                                     : posOnBoard;
+                numOfSymbols++;
             }
 
             throw new Exception("cannot place a move on this board");
