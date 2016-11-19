@@ -45,7 +45,7 @@ namespace WpfApplication1.GameLogic
                     board[i, j] = PositionOnBoard.NONE;
         }
 
-        public ReportOnBoard goingToLose()
+        public ReportOnBoard allOptions()
         {
            
 
