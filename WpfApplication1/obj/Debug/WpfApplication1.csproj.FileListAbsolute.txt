@@ -15,3 +15,14 @@ C:\Users\Orleg\Desktop\Restaurant\WpfApplication1\WpfApplication1\obj\Debug\WpfA
 C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\bin\Debug\WpfApplication1.exe.config
 C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.exe
 C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.pdb
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.csprojResolveAssemblyReference.cache
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\MainWindow.g.cs
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\App.g.cs
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1_MarkupCompile.cache
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1_MarkupCompile.lref
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\bin\Debug\WpfApplication1.exe
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\bin\Debug\WpfApplication1.pdb
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\MainWindow.baml
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.g.resources
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.Properties.Resources.resources
+C:\Users\Orleg\Source\Repos\ultimate tic tac toe\WpfApplication1\obj\Debug\WpfApplication1.csproj.GenerateResource.Cache

@@ -16,5 +16,33 @@ namespace WpfApplication1.GameLogic
             this.row = row;
             this.col = col;
         }
+
+        public Position(Position position)
+        {
+            this.row = position.row;
+            this.col = position.col;
+        }
+
+        public void diffrent(Position pos, out int newRow, out int newCol)
+        {
+            newRow = pos.row - row;
+            newCol = pos.col - col;
+
+            if (newRow != 0)
+                newRow = newRow < 0 ? -1 : 1;
+
+            if (newCol != 0)
+                newCol = newCol < 0 ? -1 : 1;
+
+        }
+
+        
+        public override bool Equals(Object other)
+        {
+            Position pos = (Position)other;
+            if (pos.row == row && pos.col == col)
+                return true;
+            return false;
+        }
     }
 }

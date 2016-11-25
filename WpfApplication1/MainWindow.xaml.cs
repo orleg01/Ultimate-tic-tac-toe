@@ -62,6 +62,12 @@ namespace WpfApplication1
         #region paintFunction
         private void  paintBoardAsPlayable( int row , int col , Brush paint)
         {
+            if (row < 0 || col < 0)
+            {
+                paintAllBoard();
+                return;
+            }
+
             Grid grid = (Grid)getElementFromLayOut(Board, row, col);
 
             for (int i = 0; i < grid.Children.Count; i++)
@@ -171,38 +177,50 @@ namespace WpfApplication1
 
                 int col, row;
 
-                Manager.BoardStatuse moveState = manager.makeMove((PlaceInformation)but.Tag , out row , out col);
-                if (moveState != Manager.BoardStatuse.FAILED)
+                Manager.BoardStatuse playerMoveState;
+                PlaceInformation placeInfo;
+                Manager.BoardStatuse computerMoveState = manager.makeMove(placeInfo = (PlaceInformation)but.Tag , out row , out col , out playerMoveState );
+
+                for (int i = 0; i < 2; i++)
                 {
-                    but.Content = "X";
-                    //but.IsEnabled = false;
+                    Manager.BoardStatuse moveState = i == 0 ? playerMoveState : computerMoveState ;
 
-                    if (moveState == Manager.BoardStatuse.LOSE)
+                    if (moveState != Manager.BoardStatuse.FAILED)
                     {
-                        paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, LOSE);
-                        boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.LOSE;
-                    }
-                    else if (moveState == Manager.BoardStatuse.WIN)
-                    {
-                        paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, WIN);
-                        boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.WIN;
-                    }
-                    else if (moveState == Manager.BoardStatuse.ABSULOT_WIN)
-                    {
-                        boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.WIN;
-                        paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, WIN);
-                        gameIsFinish = true;
-                    }
-                    else if (moveState == Manager.BoardStatuse.ABSULOT_LOSE)
-                    {
-                        boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.LOSE;
-                        paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, LOSE);
-                        gameIsFinish = true;
-                    }
+                        but = i == 0 ? but : (Button)(getElementFromLayOut((Grid)getElementFromLayOut(Board, placeInfo.PosRow, placeInfo.PosCol), Math.Abs(row), Math.Abs(col)));
 
-                    paintAllBoard(false);
-                    paintBoardAsPlayable(row, col, PLAY);
+                        but.Content = i == 0 ? "X" : "O";
+
+                        
+                        //but.IsEnabled = false;
+
+                        if (moveState == Manager.BoardStatuse.LOSE)
+                        {
+                            paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, LOSE);
+                            boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.LOSE;
+                        }
+                        else if (moveState == Manager.BoardStatuse.WIN)
+                        {
+                            paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, WIN);
+                            boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.WIN;
+                        }
+                        else if (moveState == Manager.BoardStatuse.ABSULOT_WIN)
+                        {
+                            boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.WIN;
+                            paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, WIN);
+                            gameIsFinish = true;
+                        }
+                        else if (moveState == Manager.BoardStatuse.ABSULOT_LOSE)
+                        {
+                            boardStatuse[((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol] = Manager.BoardStatuse.LOSE;
+                            paintBoardAsPlayable(((PlaceInformation)but.Tag).BigRow, ((PlaceInformation)but.Tag).BigCol, LOSE);
+                            gameIsFinish = true;
+                        }
+                    }
                 }
+
+                paintAllBoard(false);
+                paintBoardAsPlayable(row, col, PLAY);
             }
 
         }
