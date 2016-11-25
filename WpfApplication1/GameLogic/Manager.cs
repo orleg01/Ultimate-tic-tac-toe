@@ -81,7 +81,7 @@ namespace WpfApplication1.GameLogic
 
 
             #region deep waiting
-            if (num > 10)
+            if (num > 6)
             {
                 check++;
 
@@ -267,7 +267,7 @@ namespace WpfApplication1.GameLogic
 
                 int num1, num2;
                 
-                
+                /*
                 #region random add item
 
                 randNum = (++randNum) % goingToTryForSimulation.Count;
@@ -280,7 +280,7 @@ namespace WpfApplication1.GameLogic
                 }
 
                 #endregion
-                
+                */
                 if (!board[bigRow, bigCol].putable(pos.row, pos.col))
                     continue;
 
