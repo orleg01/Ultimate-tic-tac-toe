@@ -66,7 +66,8 @@ namespace WpfApplication1.GameLogic
         {
             AlphaBetaPosition toReturn = null;
             board[row, col].Calculate = true;
-            toReturn = getNextBestMove(row , col , computer , int.MinValue , int.MaxValue , 2 );
+            int min = int.MinValue, max = int.MaxValue;
+            toReturn = getNextBestMove(row , col , computer ,ref min ,ref max , 4 );
             board[row, col].Calculate = false;
 
             if (board[toReturn.BigRow, toReturn.BigCol].Finish)
@@ -82,7 +83,7 @@ namespace WpfApplication1.GameLogic
         private static readonly LittleBoard.PositionOnBoard player   = LittleBoard.PositionOnBoard.PLAYER;
         private static readonly LittleBoard.PositionOnBoard none     = LittleBoard.PositionOnBoard.NONE;
 
-        private AlphaBetaPosition getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard , int alpha ,  int beta , int iteration)
+        private AlphaBetaPosition getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,ref int alpha ,ref  int beta , int iteration)
         {
             int valueComputer = int.MinValue;
             int valuePlayer = int.MaxValue;
@@ -101,7 +102,7 @@ namespace WpfApplication1.GameLogic
                 {
                     for (int j = 0; j < 3; j++)
                     {
-                        toReturn = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration);
+                        toReturn = getNextBestMove(i, j, posOnBoard,ref alpha,ref beta, iteration);
                         if (winLose[i, j] == BoardStatuse.PROCCES)
                         {
                             if (posOnBoard == computer)
@@ -139,11 +140,11 @@ namespace WpfApplication1.GameLogic
             
             foreach (Position pos in allPossibilities)
             {
-                makeMove(new PlaceInformation(row, col, pos.row, pos.col) , posOnBoard);
+                makeMove(new PlaceInformation(row, pos.row, col, pos.col) , posOnBoard);
 
                 if (posOnBoard == computer)
                 {
-                    toReturn = getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1);
+                    toReturn = getNextBestMove(pos.row, pos.col, player,ref alpha,ref beta, iteration - 1);
                     valueComputer = Math.Max(valueComputer, toReturn.Score);
                     alpha = Math.Max(valueComputer, alpha);
 
@@ -153,13 +154,15 @@ namespace WpfApplication1.GameLogic
                     {
                         toReturn.BigRow = row;
                         toReturn.BigCol = col;
+                        toReturn.row = pos.row;
+                        toReturn.col = pos.col;
                         toReturn.Score = valueComputer;
                         return toReturn;
                     }
                 }
                 else
                 {
-                    toReturn = getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1);
+                    toReturn = getNextBestMove(pos.row, pos.col, computer,ref alpha,ref beta, iteration - 1);
                     valuePlayer = Math.Min(valuePlayer, toReturn.Score);
                     beta = Math.Min(beta, valuePlayer);
 
@@ -169,6 +172,8 @@ namespace WpfApplication1.GameLogic
                     {
                         toReturn.BigRow = row;
                         toReturn.BigCol = col;
+                        toReturn.row = pos.row;
+                        toReturn.col = pos.col;
                         toReturn.Score = valueComputer;
                         return toReturn;
                     }
