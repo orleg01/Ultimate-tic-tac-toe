@@ -67,7 +67,7 @@ namespace WpfApplication1.GameLogic
             AlphaBetaPosition toReturn = null;
             board[row, col].Calculate = true;
             int min = int.MinValue, max = int.MaxValue;
-            toReturn = getNextBestMove(row , col , computer ,ref min ,ref max , 4 );
+            toReturn = getNextBestMove(row , col , computer ,ref min ,ref max , 30 );
             board[row, col].Calculate = false;
 
             if (board[toReturn.BigRow, toReturn.BigCol].Finish)
@@ -102,9 +102,10 @@ namespace WpfApplication1.GameLogic
                 {
                     for (int j = 0; j < 3; j++)
                     {
-                        toReturn = getNextBestMove(i, j, posOnBoard,ref alpha,ref beta, iteration);
+                        
                         if (winLose[i, j] == BoardStatuse.PROCCES)
                         {
+                            toReturn = getNextBestMove(i, j, posOnBoard, ref alpha, ref beta, iteration);
                             if (posOnBoard == computer)
                             {
                                 valueComputer = Math.Max(valueComputer, toReturn.Score);
