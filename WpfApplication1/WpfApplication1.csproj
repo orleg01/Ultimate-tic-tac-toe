@@ -63,6 +63,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GameLogic\AlphaBetaPosition.cs" />
     <Compile Include="GameLogic\LittleBoard.cs" />
     <Compile Include="GameLogic\Manager.cs" />
     <Compile Include="GameLogic\PlaceInformation.cs" />

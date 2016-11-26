@@ -8,6 +8,7 @@ namespace WpfApplication1.GameLogic
 {
     class PlaceInformation
     {
+
         public int BigCol
         {
             get;
@@ -35,6 +36,11 @@ namespace WpfApplication1.GameLogic
             PosRow = posRow;
             BigCol = bigCol;
             PosCol = posCol;
+        }
+
+        public PlaceInformation(AlphaBetaPosition pos) : this(pos.BigRow , pos.row , pos.BigCol , pos.col)
+        {
+            
         }
     }
 }

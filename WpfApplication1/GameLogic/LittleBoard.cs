@@ -61,141 +61,20 @@ namespace WpfApplication1.GameLogic
                     board[i, j] = PositionOnBoard.NONE;
         }
 
-        public ReportOnBoard allOptions(PositionOnBoard pos)
+        public List<Position> allOptions()
         {
-            ReportOnBoard toReturn = new ReportOnBoard();
 
             if (Finish)
-            {
-                toReturn.gameFinish = true;
-                toReturn.youWon = WhoWon == pos || (int)WhoWon == (int)pos * 4;
-            }
-            else
-            {
-                ReportOnBoard computer = fillPosArrayOfLists(computerPosition, PositionOnBoard.COMPUTER);
-                ReportOnBoard player = fillPosArrayOfLists(playerPosition, PositionOnBoard.PLAYER);
+                throw new Exception("this board finished .. no more posabilities");
 
-                if (pos == PositionOnBoard.PLAYER)
-                {
-                    player.addBlockList(computer.getList(ReportOnBoard.TypeOfArr.FINISH));
-                    toReturn = player;
-                }
-                else
-                {
-                    computer.addBlockList(player.getList(ReportOnBoard.TypeOfArr.FINISH));
-                    toReturn = computer;
-                }
-
-
-            }
-            
-            return toReturn;
-        }
-
-        private ReportOnBoard fillPosArrayOfLists(List<Position> placeOnBoard ,PositionOnBoard whichPlayer)
-        {
-
-            ReportOnBoard report = new ReportOnBoard();
-
-            for (int i = 0; i < placeOnBoard.Count - 1; i++)
-                for (int j = i + 1; j < placeOnBoard.Count; j++)
-                {
-                    int sizeBetweenBoxes = findMaxSize(placeOnBoard[i], placeOnBoard[j] , whichPlayer);
-                    switch (sizeBetweenBoxes)
-                    {
-                        case 0:
-
-                            int row = placeOnBoard[i].row - placeOnBoard[j].row;
-                            int col = placeOnBoard[i].col - placeOnBoard[j].col;
-                            int tempRow, tempCol;
-
-                            if ((tempRow = placeOnBoard[i].row + row) < 3 && tempRow >= 0 &&
-                                (tempCol = placeOnBoard[i].col + col) < 3 && tempCol >= 0)
-                            {
-                                if (board[tempRow, tempCol] == PositionOnBoard.NONE)
-                                {
-                                    report.addLastMoveToWin(new Position(tempRow, tempCol));
-                                }
-                            }
-                            else if ((tempRow = placeOnBoard[j].row - row) < 3 && tempRow >= 0 &&
-                                   (tempCol = placeOnBoard[j].col - col) < 3 && tempCol >= 0)
-                            {
-                                if (board[tempRow, tempCol] == PositionOnBoard.NONE)
-                                {
-                                    report.addLastMoveToWin(new Position(tempRow, tempCol));
-                                }
-                            }
-                            break;
-                    }
-                }
+            List<Position> toReturn = new List<Position>();
 
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
                     if (board[i, j] == PositionOnBoard.NONE)
-                        report.addAnotherPossibleMove(new Position(i, j));
+                        toReturn.Add(new Position(i, j));
 
-            return report;
-        }
-
-        private int findMaxSize(Position position1, Position position2 , PositionOnBoard posOnBoard)
-        {
-            Position temp = new Position(position1);
-            bool[,] tempBoard = new bool[3, 3];
-
-            tempBoard[temp.row, temp.col] = true;
-            tempBoard[position2.row, position2.col] = true;
-            int numberOfIteration = -1;
-
-            if(!temp.Equals(position2) )
-            {
-                numberOfIteration++;
-                int row, col;
-                temp.diffrent(position2,out row,out col);
-
-                if (((int)board[temp.row + row, temp.col + col] | (int)posOnBoard | ((int)posOnBoard) * 4) == ((int)posOnBoard | ((int)posOnBoard * 4)))
-                {
-                    temp.col += col;
-                    temp.row += row;
-                    if (temp.Equals(position2))
-                        return numberOfIteration;
-                    else
-                        return -1;
-                }
-                else if (board[temp.row + row, temp.col + col] == PositionOnBoard.NONE)
-                {
-                    temp.col += col;
-                    temp.row += row;
-                    return 1 + numberOfIteration + findMaxSize(temp, position2, posOnBoard);
-                }
-                else
-                {
-                    Position posRow = new Position(temp);
-                    Position posCol = new Position(temp);
-                    int one = -1, sec = -1;
-
-                    if (row != 0)
-                    {
-                        posRow.row += row;
-                        one = 1 + numberOfIteration + findMaxSize(posRow, position2, posOnBoard);
-                    }
-                    if (col != 0)
-                    {
-                        posCol.col += col;
-                        sec = 1 + numberOfIteration + findMaxSize(posCol, position2, posOnBoard);
-                    }
-
-                    if (one == -1)
-                        one = 100;
-                    if (sec == -1)
-                        sec = 100;
-                    if (one == sec && sec == 100)
-                        return -1;
-                    return one < sec ? one : sec;
-                }
-
-            }
-
-            return numberOfIteration;
+            return toReturn;
         }
 
         public bool makeMove(PositionOnBoard posOnBoard, int row, int col)
@@ -250,7 +129,7 @@ namespace WpfApplication1.GameLogic
             return false;
         }
 
-        public void goBack(int number, bool fullRound , PositionOnBoard pos)
+        public bool goBack(int number, bool fullRound , PositionOnBoard pos)
         {
             bool whosTurn = pos == PositionOnBoard.PLAYER; 
             for (int i = 0; i < number; i++)
@@ -286,6 +165,8 @@ namespace WpfApplication1.GameLogic
             Finish = isEnd(pos);
             if (!Finish)
                 WhoWon = PositionOnBoard.NONE;
+
+            return Finish;
         }
 
         public int numberOfItemOnBoard(PositionOnBoard pos)
@@ -299,5 +180,69 @@ namespace WpfApplication1.GameLogic
         }
 
 
+
+        public int lastMove(PositionOnBoard pos)
+        {
+
+            int toReturn = 0;
+            //List<Position> winOpertunity = new List<Position>();
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (board[i, 0] == pos && board[i, 1] == pos)
+                    //winOpertunity.Add(new Position(i, 2));
+                    toReturn++;
+                else if (board[i, 0] == pos && board[i, 2] == pos)
+                    //winOpertunity.Add(new Position(i, 1));
+                    toReturn++;
+                else if (board[i, 1] == pos && board[i, 2] == pos)
+                    //winOpertunity.Add(new Position(i, 0));
+                    toReturn++;
+
+                if (board[0, i] == pos && board[1, i] == pos)
+                    //winOpertunity.Add(new Position(2, i));
+                    toReturn++;
+                else if (board[0, i] == pos && board[2, i] == pos)
+                    //winOpertunity.Add(new Position(1, i));
+                    toReturn++;
+                else if (board[1, i] == pos && board[2, i] == pos)
+                    //winOpertunity.Add(new Position(0, i));
+                    toReturn++;
+            }
+
+            if (board[0, 0] == pos && board[1, 1] == pos)
+                //winOpertunity.Add(new Position(2, 2));
+                toReturn++;
+            else if (board[0, 0] == pos && board[2, 2] == pos)
+                //winOpertunity.Add(new Position(1, 1));
+                toReturn++;
+            else if (board[1, 1] == pos && board[2, 2] == pos)
+                //winOpertunity.Add(new Position(0, 0));
+                toReturn++;
+
+            if (board[0, 2] == pos && board[1, 1] == pos)
+                //winOpertunity.Add(new Position(2, 0));
+                toReturn++;
+            else if (board[0, 2] == pos && board[2, 0] == pos)
+                //winOpertunity.Add(new Position(1, 1));
+                toReturn++;
+            else if (board[1, 1] == pos && board[2, 0] == pos)
+                //winOpertunity.Add(new Position(0, 2));
+                toReturn++;
+
+
+            return toReturn;
+        }
+
+
+        public static PositionOnBoard getOpposit(PositionOnBoard pos)
+        {
+            if (pos == PositionOnBoard.COMPUTER)
+                return PositionOnBoard.PLAYER;
+            else if (pos == PositionOnBoard.PLAYER)
+                return PositionOnBoard.COMPUTER;
+
+            throw new Exception("Didnt impliment an opposit choice for this enum");
+        }
     }
 }
