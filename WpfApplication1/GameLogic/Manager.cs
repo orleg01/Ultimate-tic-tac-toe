@@ -8,6 +8,8 @@ namespace WpfApplication1.GameLogic
 {
     class Manager
     {
+        
+        private const bool DEBUG = false;
 
         public enum BoardStatuse { WIN , LOSE , PROCCES , FAILED , ABSULOT_WIN , ABSULOT_LOSE};
 
@@ -28,10 +30,11 @@ namespace WpfApplication1.GameLogic
 
         public BoardStatuse makeMove(PlaceInformation box , LittleBoard.PositionOnBoard positionOnBoard)
         {
-
+            int col = Math.Abs(box.PosCol);
+            int row = Math.Abs(box.PosRow);
             BoardStatuse state = positionOnBoard == LittleBoard.PositionOnBoard.PLAYER ? BoardStatuse.WIN : BoardStatuse.LOSE;
 
-            winLose[box.BigRow , box.BigCol] = board[box.BigRow, box.BigCol].makeMove(positionOnBoard, box.PosRow, box.PosCol) ?
+            winLose[box.BigRow , box.BigCol] = board[box.BigRow, box.BigCol].makeMove(positionOnBoard, row, col) ?
                                                                             state : BoardStatuse.PROCCES;
 
             if (isEnd(state))
@@ -40,60 +43,264 @@ namespace WpfApplication1.GameLogic
             return winLose[box.BigRow, box.BigCol];
         }
 
-        private int getMarkOfChoice(LittleBoard.PositionOnBoard positionOnBoard)
+        /*
+        private float getMarkOfChoice(LittleBoard.PositionOnBoard positionOnBoard)
         {
-            int toReturn = 0;
+            float toReturn = 0;
             BoardStatuse state = positionOnBoard == LittleBoard.PositionOnBoard.PLAYER ? BoardStatuse.WIN : BoardStatuse.LOSE;
             BoardStatuse oppState = getOpposite(state);
             if (isEnd(state))
-                return 100;
+                return 1000;
+            else if (isEnd(oppState))
+                return -1000;
 
-            toReturn += (lastMove(state).Count*15);
-            toReturn -= (lastMove(oppState).Count * 15);
+            toReturn += (lastMove(state).Count*200);
+            toReturn -= (lastMove(oppState).Count * 200);
 
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
                     if (winLose[i, j] != BoardStatuse.PROCCES)
-                        toReturn += winLose[i, j] == state ? 5 : -5;
+                        toReturn += winLose[i, j] == state ? 50 : -50;
                     else
-                        toReturn +=  board[i, j].lastMove(positionOnBoard) - board[i, j].lastMove(LittleBoard.getOpposit(positionOnBoard));
+                    {
+                        toReturn += board[i, j].lastMove(positionOnBoard);
+                        toReturn -= board[i, j].lastMove(LittleBoard.getOpposit(positionOnBoard));
+                    }
+
+
+            float num = 1;
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    if (!board[i, j].Finish)
+                    {
+                        int sizeMe = board[i, j].numberOfItemOnBoard(positionOnBoard);
+                        int sizeOther = board[i, j].numberOfItemOnBoard(LittleBoard.getOpposit(positionOnBoard));
+                        if (sizeMe == 0 && sizeOther == 0)
+                            continue;
+                        num += ((sizeMe) / (sizeMe + sizeOther));
+                    }
+                }
+            toReturn += num;
+            
+            return toReturn;
+        }*/
+
+        private bool boardIsFull()
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    if (!board[i, j].isFull())
+                        return false;
+            return true;
+        }
+
+        public static readonly int APPROXIMATE_WIN_SCORE = 7;
+
+        private int getMarkOfChoice(LittleBoard.PositionOnBoard positionOnBoard)
+        {
+            const int BIG_BOARD_WEIGHT      = 23;
+            const int WIN_SCORE             = 1000000;
+
+            int toReturn = 0;
+            BoardStatuse state = positionOnBoard == LittleBoard.PositionOnBoard.PLAYER ? BoardStatuse.WIN : BoardStatuse.LOSE;
+            BoardStatuse oppState = getOpposite(state);
+            bool winner;
+
+            if (winner = isEnd(state) || isEnd(oppState))
+            {
+                int freeCell = 0;
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        freeCell += board[i, j].numberOfItemOnBoard(LittleBoard.PositionOnBoard.NONE);
+
+                return (winner ? WIN_SCORE + freeCell : -WIN_SCORE - freeCell);
+            }
+            
+            if (boardIsFull())
+                return 0;
+
+            toReturn = getBigBoardScore(state) * BIG_BOARD_WEIGHT;
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    if (!board[i, j].isFull())
+                        toReturn += board[i, j].getboardScore(positionOnBoard);
 
             return toReturn;
+        }
 
+        public static readonly int[,] winingPosability=  {{0 , 1 , 2},
+                                                          {3 , 4 , 5},
+                                                          {6 , 7 , 8},
+                                                          {0 , 3 , 6},
+                                                          {1 , 4 , 7},
+                                                          {2 , 5 , 8},
+                                                          {0 , 4 , 8},
+                                                          {2 , 4 , 6}};
+
+        public int getBigBoardScore(BoardStatuse state)
+        {
+            if (boardIsFull())
+                return 0;
+            BoardStatuse opposit = getOpposite(state);
+            int check = 0;
+            int rivial = 0;
+
+            for (int i = 0; i < winingPosability.GetLength(0); i++)
+            {
+                int[] checkArr = { winingPosability[i, 0], winingPosability[i, 1], winingPosability[i, 2] };
+                BoardStatuse[] statesB = new BoardStatuse[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    statesB[j] = winLose[checkArr[j] / 3, checkArr[j] % 3];
+                }
+
+                bool playerInArr  = false;
+                int playerCounter = 0;
+                bool rivialInArr = false;
+                int rivialCounter = 0;
+
+                for (int j = 0; j < 3; j++)
+                {
+                    if (state == statesB[j])
+                    {
+                        playerInArr = true;
+                        playerCounter++;
+                    }
+                    else if (opposit == statesB[j])
+                    {
+                        rivialCounter++;
+                        rivialInArr = true;
+                    }
+                }
+
+                if (playerInArr)
+                {
+                    if (rivialInArr)
+                        continue;
+
+                    if (playerCounter > 1)
+                        check += APPROXIMATE_WIN_SCORE;
+                    check += 1;
+                }
+                else if (rivialInArr)
+                {
+                    if (rivialCounter > 1)
+                        rivial += APPROXIMATE_WIN_SCORE;
+                    rivial += 1;
+                }
+            }
+            return check - rivial;
+        }
+
+        public void setCalculateMode(bool calc)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    board[i, j].Calculate = calc;
+                }
         }
 
         public PlaceInformation getNextBestMove(int row , int col)
         {
-            AlphaBetaPosition toReturn = null;
-            board[row, col].Calculate = true;
-            int min = int.MinValue, max = int.MaxValue;
-            toReturn = getNextBestMove(row , col , computer ,ref min ,ref max , 30 );
-            board[row, col].Calculate = false;
+
+            PlaceInformation toReturn = null;
+            setCalculateMode(true);
+            float min = float.MinValue, max = float.MaxValue;
+            toReturn = getNextBestMove(row , col ,min ,max , 3);
+
+            if (toReturn.PosCol == -1 || toReturn.PosRow == -1)
+                throw new Exception("here");
+
+            setCalculateMode(false);
 
             if (board[toReturn.BigRow, toReturn.BigCol].Finish)
             {
-                toReturn.row *= -1;
-                toReturn.col *= -1;
+                toReturn.PosRow *= -1;
+                toReturn.PosCol *= -1;
             }
 
-            return new PlaceInformation(toReturn);
+            return toReturn;
         }
 
         private static readonly LittleBoard.PositionOnBoard computer = LittleBoard.PositionOnBoard.COMPUTER;
         private static readonly LittleBoard.PositionOnBoard player   = LittleBoard.PositionOnBoard.PLAYER;
-        private static readonly LittleBoard.PositionOnBoard none     = LittleBoard.PositionOnBoard.NONE;
 
-        private AlphaBetaPosition getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,ref int alpha ,ref  int beta , int iteration)
+        private PlaceInformation getNextBestMove(int row, int col, float min, float max, int interval)
         {
-            int valueComputer = int.MinValue;
-            int valuePlayer = int.MaxValue;
-            AlphaBetaPosition toReturn = new AlphaBetaPosition(row , col);
-            //toReturn.BigRow = row;
-            //toReturn.BigCol = col;
+
+            int rowHelper = 0, colHelper = 0;
+            float value = float.MinValue;
+            float temp = 0;
+            PlaceInformation toReturn = new PlaceInformation(row, -1, col, -1);
+            Random rand = new Random();
+
+
+            if (board[row, col].Finish)
+            {
+
+                for (int i = 0; i < 3; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (!board[i, j].Finish)
+                        {
+                            temp = getNextBestMove(i, j, computer, min, max, interval , ref rowHelper, ref colHelper);
+                            if (temp > value)
+                            {
+                                value = temp;
+                                toReturn.BigRow = i;
+                                toReturn.BigCol = j;
+                                toReturn.PosCol = colHelper;
+                                toReturn.PosRow = rowHelper;
+                            }
+                        }
+                    }
+                }
+                return toReturn;
+
+            }
+
+            List<Position> allPossiblePos  = board[row, col].allOptions();
+
+            int whereToStart = ((int)(rand.NextDouble() * 50000)) % allPossiblePos.Count;
+
+            for(int i = 0; i < allPossiblePos.Count; i++)
+            {
+                Position pos = allPossiblePos[(whereToStart + i) % allPossiblePos.Count];
+                makeMove(new PlaceInformation(row, pos.row, col, pos.col), computer);
+                temp = getNextBestMove(pos.row, pos.col, player, min, max, interval - 1 , ref rowHelper , ref colHelper);
+                if (temp > value)
+                {
+                    value = temp;
+                    toReturn.PosRow = pos.row;
+                    toReturn.PosCol = pos.col;
+                }
+                winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(computer) : BoardStatuse.PROCCES;
+            }
+
+            return toReturn;
+        }
+
+        private float getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,float alpha , float beta , int iteration , ref int rowHelper , ref int colhelper)
+        {
+
+            float valueComputer = float.MinValue;
+            float valuePlayer   = float.MaxValue;
+            float goal;
+
             if (isEnd(getOpposite(playerToState(posOnBoard))) || iteration == 0)
             {
-                toReturn.Score = getMarkOfChoice(computer);
-                return toReturn;
+                goal = getMarkOfChoice(computer);
+                Console.WriteLine(goal);
+                if (DEBUG)
+                {
+                    printTable();
+                    Console.WriteLine("the score is : " + goal + "\n\n\n\n\n\n\n\n");
+                    Console.ReadLine();
+                }
+                return goal;
             }
           
             if (winLose[row, col] != BoardStatuse.PROCCES)
@@ -102,90 +309,112 @@ namespace WpfApplication1.GameLogic
                 {
                     for (int j = 0; j < 3; j++)
                     {
-                        
                         if (winLose[i, j] == BoardStatuse.PROCCES)
                         {
-                            toReturn = getNextBestMove(i, j, posOnBoard, ref alpha, ref beta, iteration);
+                            float v = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration , ref rowHelper , ref colhelper);
                             if (posOnBoard == computer)
                             {
-                                valueComputer = Math.Max(valueComputer, toReturn.Score);
+                                valueComputer = Math.Max(valueComputer, v);
                                 alpha = Math.Max(valueComputer, alpha);
+
                                 if (beta <= alpha)
                                 {
-                                    toReturn.BigRow = i;
-                                    toReturn.BigCol = j;
-                                    toReturn.Score = valueComputer;
-                                    return toReturn;
+                                    return valueComputer;
                                 }
                             }
                             else
                             {
-                                valuePlayer = Math.Min(valuePlayer, toReturn.Score);
+                                valuePlayer = Math.Min(valuePlayer, v);
                                 beta = Math.Min(beta, valuePlayer);
+
                                 if (beta <= alpha)
                                 {
-                                    toReturn.BigRow = i;
-                                    toReturn.BigCol = j;
-                                    toReturn.Score = valueComputer;
-                                    return toReturn;
+                                    return valuePlayer;
                                 }
                             }
                         }
                     }
                 }
 
-                return toReturn;
+                if (posOnBoard == computer)
+                    return valueComputer;
+                else
+                    return valuePlayer;
             }
 
             List<Position> allPossibilities = board[row, col].allOptions();
-            
+
+
+            float help;
+
             foreach (Position pos in allPossibilities)
             {
+
                 makeMove(new PlaceInformation(row, pos.row, col, pos.col) , posOnBoard);
 
                 if (posOnBoard == computer)
                 {
-                    toReturn = getNextBestMove(pos.row, pos.col, player,ref alpha,ref beta, iteration - 1);
-                    valueComputer = Math.Max(valueComputer, toReturn.Score);
+                    help = valueComputer;
+                    valueComputer = Math.Max(valueComputer, getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1, ref rowHelper, ref colhelper));
                     alpha = Math.Max(valueComputer, alpha);
-
+                    
                     winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
+
+                    if (help != valueComputer)
+                    {
+                        rowHelper = pos.row;
+                        colhelper = pos.col;
+                    }
 
                     if (beta <= alpha)
                     {
-                        toReturn.BigRow = row;
-                        toReturn.BigCol = col;
-                        toReturn.row = pos.row;
-                        toReturn.col = pos.col;
-                        toReturn.Score = valueComputer;
-                        return toReturn;
+                        return valueComputer;
                     }
                 }
                 else
                 {
-                    toReturn = getNextBestMove(pos.row, pos.col, computer,ref alpha,ref beta, iteration - 1);
-                    valuePlayer = Math.Min(valuePlayer, toReturn.Score);
+                    help = valuePlayer;
+                    valuePlayer = Math.Min(valuePlayer, getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1, ref rowHelper, ref colhelper));
                     beta = Math.Min(beta, valuePlayer);
 
                     winLose[row, col] = board[row, col].goBack(1, false, player) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
 
+                    if (help != valuePlayer)
+                    {
+                        rowHelper = pos.row;
+                        colhelper = pos.col;
+                    }
+
                     if (beta <= alpha)
                     {
-                        toReturn.BigRow = row;
-                        toReturn.BigCol = col;
-                        toReturn.row = pos.row;
-                        toReturn.col = pos.col;
-                        toReturn.Score = valueComputer;
-                        return toReturn;
+                        return valuePlayer;
                     }
                 }
             }
 
-            toReturn.BigRow = row;
-            toReturn.BigCol = col;
+            if (posOnBoard == computer)
+                return valueComputer;
+            else
+                return valuePlayer;
 
-            return toReturn;
+        }
 
+        private void printTable()
+        {
+            string toPrint = "";
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    toPrint += board[i / 3, j / 3].whoThere(i%3 , j%3);
+                    if (j % 3 == 2 && j != 8)
+                        toPrint += "|";
+                }
+                toPrint += "\n";
+                if (i % 3 == 2 && i != 8)
+                    toPrint += "________________\n";
+            }
+            Console.WriteLine(toPrint);
         }
 
         private BoardStatuse playerToState(LittleBoard.PositionOnBoard pos)
@@ -210,26 +439,15 @@ namespace WpfApplication1.GameLogic
 
         private bool isEnd(BoardStatuse state)
         {
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < winingPosability.GetLength(0); i++)
             {
-                if (winLose[i, 0] == winLose[i, 1] && winLose[i, 1] == winLose[i, 2] && winLose[i, 2] == state)
-                    return true;
-                else if (winLose[0, i] == winLose[1, i] && winLose[1, i] == winLose[2, i] && winLose[2, i] == state)
+                if (winLose[winingPosability[i, 0] / 3, winingPosability[i, 0] % 3] == state &&
+                   winLose[winingPosability[i, 1] / 3, winingPosability[i, 1] % 3] == state &&
+                   winLose[winingPosability[i, 2] / 3, winingPosability[i, 2] % 3] == state)
                     return true;
             }
 
-            if (winLose[0, 0] == state && winLose[1, 1] == state && winLose[2, 2] == state)
-                return true;
-            else if (winLose[2, 0] == state && winLose[1, 1] == state && winLose[0, 2] == state)
-                return true;
-            
-
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                    if (winLose[i, j] == BoardStatuse.PROCCES)
-                        return false;
-
-            return true;
+            return boardIsFull();
         }
 
         private List<Position> lastMove(BoardStatuse pos)
@@ -238,37 +456,42 @@ namespace WpfApplication1.GameLogic
 
             for (int i = 0; i < 3; i++)
             {
-                if (winLose[i, 0] == pos && winLose[i, 1] == pos)
+                if (winLose[i, 0] == pos && winLose[i, 1] == pos && winLose[i,2] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position(i, 2));
-                else if (winLose[i, 0] == pos && winLose[i, 2] == pos)
+                else if (winLose[i, 0] == pos && winLose[i, 2] == pos && winLose[i, 1] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position(i, 1));
-                else if (winLose[i, 1] == pos && winLose[i, 2] == pos)
+                else if (winLose[i, 1] == pos && winLose[i, 2] == pos && winLose[i, 0] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position(i, 0));
 
-                if (winLose[0 , i] == pos && winLose[1 , i] == pos)
+                if (winLose[0 , i] == pos && winLose[1 , i] == pos && winLose[2 , i] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position(2 , i));
-                else if (winLose[0 , i] == pos && winLose[2 , i] == pos)
+                else if (winLose[0 , i] == pos && winLose[2 , i] == pos && winLose[1 , i] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position( 1 , i));
-                else if (winLose[1 , i] == pos && winLose[2 , i] == pos)
+                else if (winLose[1 , i] == pos && winLose[2 , i] == pos && winLose[0 , i] == BoardStatuse.PROCCES)
                     winOpertunity.Add(new Position( 0 , i));
             }
 
-            if (winLose[0, 0] == pos && winLose[1, 1] == pos)
+            if (winLose[0, 0] == pos && winLose[1, 1] == pos && winLose[2, 2] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(2, 2));
-            else if (winLose[0, 0] == pos && winLose[2, 2] == pos)
+            else if (winLose[0, 0] == pos && winLose[2, 2] == pos && winLose[1, 1] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(1, 1));
-            else if (winLose[1, 1] == pos && winLose[2, 2] == pos)
+            else if (winLose[1, 1] == pos && winLose[2, 2] == pos && winLose[0, 0] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(0, 0));
 
-            if (winLose[0, 2] == pos && winLose[1, 1] == pos)
+            if (winLose[0, 2] == pos && winLose[1, 1] == pos && winLose[2, 0] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(2, 0));
-            else if (winLose[0, 2] == pos && winLose[2, 0] == pos)
+            else if (winLose[0, 2] == pos && winLose[2, 0] == pos && winLose[1, 1] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(1, 1));
-            else if (winLose[1, 1] == pos && winLose[2, 0] == pos)
+            else if (winLose[1, 1] == pos && winLose[2, 0] == pos && winLose[0, 2] == BoardStatuse.PROCCES)
                 winOpertunity.Add(new Position(0, 2));
 
 
             return winOpertunity;
+        }
+
+        public bool PositionIsGood(int row, int col)
+        {
+            return !board[row, col].Finish;
         }
     }
 }

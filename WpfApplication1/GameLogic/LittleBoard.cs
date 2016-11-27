@@ -63,7 +63,6 @@ namespace WpfApplication1.GameLogic
 
         public List<Position> allOptions()
         {
-
             if (Finish)
                 throw new Exception("this board finished .. no more posabilities");
 
@@ -108,25 +107,22 @@ namespace WpfApplication1.GameLogic
 
         public bool putable(int row, int col)
         {
+            if (row == -1 || col == -1)
+                return true;
             return board[row, col] == PositionOnBoard.NONE;
         }
 
         private bool isEnd(PositionOnBoard pos)
         {
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < Manager.winingPosability.GetLength(0); i++)
             {
-                if (board[i, 0] == board[i, 1] && board[i, 1] == board[i, 2] && board[i, 2] == pos)
-                    return true;
-                else if (board[0 , i] == board[1 , i] && board[1 , i] == board[2 , i] && board[2 , i] == pos)
+                if (board[Manager.winingPosability[i, 0] / 3, Manager.winingPosability[i, 0] % 3] == pos &&
+                    board[Manager.winingPosability[i, 1] / 3, Manager.winingPosability[i, 1] % 3] == pos &&
+                    board[Manager.winingPosability[i, 2] / 3, Manager.winingPosability[i, 2] % 3] == pos)
                     return true;
             }
 
-            if (board[0, 0] == pos && board[1, 1] == pos && board[2, 2] == pos)
-                return true;
-            else if (board[2, 0] == pos && board[1, 1] == pos && board[0, 2] == pos)
-                return true;
-
-            return false;
+            return isFull();
         }
 
         public bool goBack(int number, bool fullRound , PositionOnBoard pos)
@@ -185,49 +181,36 @@ namespace WpfApplication1.GameLogic
         {
 
             int toReturn = 0;
-            //List<Position> winOpertunity = new List<Position>();
 
             for (int i = 0; i < 3; i++)
             {
-                if (board[i, 0] == pos && board[i, 1] == pos)
-                    //winOpertunity.Add(new Position(i, 2));
+                if (board[i, 0] == pos && board[i, 1] == pos && board[i , 2] == PositionOnBoard.NONE)
                     toReturn++;
-                else if (board[i, 0] == pos && board[i, 2] == pos)
-                    //winOpertunity.Add(new Position(i, 1));
+                else if (board[i, 0] == pos && board[i, 2] == pos && board[i, 1] == PositionOnBoard.NONE)
                     toReturn++;
-                else if (board[i, 1] == pos && board[i, 2] == pos)
-                    //winOpertunity.Add(new Position(i, 0));
+                else if (board[i, 1] == pos && board[i, 2] == pos && board[i, 0] == PositionOnBoard.NONE)
                     toReturn++;
 
-                if (board[0, i] == pos && board[1, i] == pos)
-                    //winOpertunity.Add(new Position(2, i));
+                if (board[0, i] == pos && board[1, i] == pos && board[2, i] == PositionOnBoard.NONE)
                     toReturn++;
-                else if (board[0, i] == pos && board[2, i] == pos)
-                    //winOpertunity.Add(new Position(1, i));
+                else if (board[0, i] == pos && board[2, i] == pos && board[1, i] == PositionOnBoard.NONE)
                     toReturn++;
-                else if (board[1, i] == pos && board[2, i] == pos)
-                    //winOpertunity.Add(new Position(0, i));
+                else if (board[1, i] == pos && board[2, i] == pos && board[0, i] == PositionOnBoard.NONE)
                     toReturn++;
             }
 
-            if (board[0, 0] == pos && board[1, 1] == pos)
-                //winOpertunity.Add(new Position(2, 2));
+            if (board[0, 0] == pos && board[1, 1] == pos && board[2, 2] == PositionOnBoard.NONE)
                 toReturn++;
-            else if (board[0, 0] == pos && board[2, 2] == pos)
-                //winOpertunity.Add(new Position(1, 1));
+            else if (board[0, 0] == pos && board[2, 2] == pos && board[1, 1] == PositionOnBoard.NONE)
                 toReturn++;
-            else if (board[1, 1] == pos && board[2, 2] == pos)
-                //winOpertunity.Add(new Position(0, 0));
+            else if (board[1, 1] == pos && board[2, 2] == pos && board[0, 0] == PositionOnBoard.NONE)
                 toReturn++;
 
-            if (board[0, 2] == pos && board[1, 1] == pos)
-                //winOpertunity.Add(new Position(2, 0));
+            if (board[0, 2] == pos && board[1, 1] == pos && board[2, 0] == PositionOnBoard.NONE)
                 toReturn++;
-            else if (board[0, 2] == pos && board[2, 0] == pos)
-                //winOpertunity.Add(new Position(1, 1));
+            else if (board[0, 2] == pos && board[2, 0] == pos && board[1, 1] == PositionOnBoard.NONE)
                 toReturn++;
-            else if (board[1, 1] == pos && board[2, 0] == pos)
-                //winOpertunity.Add(new Position(0, 2));
+            else if (board[1, 1] == pos && board[2, 0] == pos && board[0, 2] == PositionOnBoard.NONE)
                 toReturn++;
 
 
@@ -243,6 +226,84 @@ namespace WpfApplication1.GameLogic
                 return PositionOnBoard.COMPUTER;
 
             throw new Exception("Didnt impliment an opposit choice for this enum");
+        }
+
+        internal string whoThere(int v1, int v2)
+        {
+            PositionOnBoard pos = board[v1, v2];
+            switch (pos)
+            {
+                case PositionOnBoard.PLAYER :
+                case PositionOnBoard.TEMP_PLAYER:
+                    return " X ";
+                case PositionOnBoard.NONE:
+                    return " - ";
+                case PositionOnBoard.COMPUTER:
+                case PositionOnBoard.TEMP_COMPUTER:
+                    return " O ";
+                
+            }
+            return "GAY";
+        }
+
+        public int getboardScore(PositionOnBoard posOnBoard)
+        {
+            if (isFull())
+                return 0;
+            PositionOnBoard opposit = getOpposit(posOnBoard);
+            int check = 0;
+            int rivial = 0;
+
+            for (int i = 0; i < Manager.winingPosability.GetLength(0); i++)
+            {
+                int[] checkArr = { Manager.winingPosability[i, 0], Manager.winingPosability[i, 1], Manager.winingPosability[i, 2] };
+                PositionOnBoard[] statesB = new PositionOnBoard[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    statesB[j] = board[checkArr[j] / 3, checkArr[j] % 3];
+                }
+
+                bool playerInArr = false;
+                int playerCounter = 0;
+                bool rivialInArr = false;
+                int rivialCounter = 0;
+
+                for (int j = 0; j < 3; j++)
+                {
+                    if (posOnBoard == statesB[j])
+                    {
+                        playerInArr = true;
+                        playerCounter++;
+                    }
+                    else if (opposit == statesB[j])
+                    {
+                        rivialCounter++;
+                        rivialInArr = true;
+                    }
+                }
+
+                if (playerInArr)
+                {
+                    if (rivialInArr)
+                        continue;
+
+                    if (playerCounter > 1)
+                        check += Manager.APPROXIMATE_WIN_SCORE;
+                    check += 1;
+                }
+                else if (rivialInArr)
+                {
+                    if (rivialCounter > 1)
+                        rivial += Manager.APPROXIMATE_WIN_SCORE;
+                    rivial += 1;
+                }
+            }
+            return check - rivial;
+        }
+
+        public bool isFull()
+        {
+            return numberOfItemOnBoard(PositionOnBoard.NONE) == 0;
         }
     }
 }

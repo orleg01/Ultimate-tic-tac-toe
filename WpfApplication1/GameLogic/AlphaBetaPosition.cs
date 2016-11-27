@@ -21,7 +21,7 @@ namespace WpfApplication1.GameLogic
             set;
         }
 
-        public int Score
+        public float Score
         {
             get;
             set;

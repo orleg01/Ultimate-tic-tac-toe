@@ -62,7 +62,7 @@ namespace WpfApplication1
         #region paintFunction
         private void  paintBoardAsPlayable( int row , int col , Brush paint)
         {
-            if (row < 0 || col < 0)
+            if (row < 0 || col < 0 || boardStatuse[row, col] != Manager.BoardStatuse.PROCCES)
             {
                 paintAllBoard();
                 return;
@@ -75,12 +75,6 @@ namespace WpfApplication1
                 Button but = (Button)grid.Children[i];
                 but.Background = paint;
 
-                /*
-                if(paint == PLAY)
-                    but.IsEnabled = true;
-                else
-                    but.IsEnabled = false;
-                */
 
             }
         }
