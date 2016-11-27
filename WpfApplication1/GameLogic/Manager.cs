@@ -284,13 +284,13 @@ namespace WpfApplication1.GameLogic
 
             int whereToStart = ((int)(rand.NextDouble() * 50000)) % allPossiblePos.Count;
 
-            float temp;
-
+            float temp; 
             for(int i = 0; i < allPossiblePos.Count; i++)
             {
                 Position pos = allPossiblePos[(whereToStart + i) % allPossiblePos.Count];
                 makeMove(new PlaceInformation(row, pos.row, col, pos.col), computer);
                 temp = getNextBestMove(pos.row, pos.col, player, min, max, interval - 1 );
+                Console.WriteLine(i + ". is : " + temp);
                 if (temp > value)
                 {
                     value = temp;
@@ -299,7 +299,7 @@ namespace WpfApplication1.GameLogic
                 }
                 winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(computer) : BoardStatuse.PROCCES;
             }
-            temp = value;
+            bestWeigth = value;
             return toReturn;
         }
 
@@ -312,13 +312,13 @@ namespace WpfApplication1.GameLogic
             float valuePlayer   = float.MaxValue;
             float goal;
 
-            if (isEnd(getOpposite(playerToState(posOnBoard))) || iteration == 0)
+            if (isEnd(getOpposite(playerToState(posOnBoard))) || isEnd(playerToState(posOnBoard)) || iteration == 0)
             {
                 goal = getMarkOfChoice(computer);
-                if (helpForDebug != goal)
+                if (helpForDebug < goal)
                 {
                     helpForDebug = goal;
-                    //Console.WriteLine(goal);
+                    Console.WriteLine(goal);
                 }
                 if (DEBUG)
                 {

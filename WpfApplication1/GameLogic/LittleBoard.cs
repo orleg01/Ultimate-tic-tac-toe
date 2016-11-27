@@ -141,13 +141,18 @@ namespace WpfApplication1.GameLogic
         {
             for (int i = 0; i < Manager.winingPosability.GetLength(0); i++)
             {
-                if (board[Manager.winingPosability[i, 0] / 3, Manager.winingPosability[i, 0] % 3] == pos &&
-                    board[Manager.winingPosability[i, 1] / 3, Manager.winingPosability[i, 1] % 3] == pos &&
-                    board[Manager.winingPosability[i, 2] / 3, Manager.winingPosability[i, 2] % 3] == pos)
+                if (getLegitimatePositionForCalculate(board[Manager.winingPosability[i, 0] / 3, Manager.winingPosability[i, 0] % 3]) == pos &&
+                    getLegitimatePositionForCalculate(board[Manager.winingPosability[i, 1] / 3, Manager.winingPosability[i, 1] % 3]) == pos &&
+                    getLegitimatePositionForCalculate(board[Manager.winingPosability[i, 2] / 3, Manager.winingPosability[i, 2] % 3]) == pos)
                     return true;
             }
 
             return isFull();
+        }
+
+        public static PositionOnBoard getLegitimatePositionForCalculate(PositionOnBoard pos)
+        {
+            return (int)pos > 4 ? (PositionOnBoard)(((int)pos) / 4) : pos;
         }
 
         public bool goBack(int number, bool fullRound , PositionOnBoard pos)
@@ -286,6 +291,8 @@ namespace WpfApplication1.GameLogic
                 for (int j = 0; j < 3; j++)
                 {
                     statesB[j] = board[checkArr[j] / 3, checkArr[j] % 3];
+                    if ((int)statesB[j] > 4)
+                        statesB[j] = (PositionOnBoard)(((int)statesB[j]) / 4);
                 }
 
                 bool playerInArr = false;
