@@ -182,7 +182,7 @@ namespace WpfApplication1
 
                 playerMove = manager.getNextBestMove(playerMove.PosRow, playerMove.PosCol);
 
-                moveState = manager.makeMove(playerMove, computer);
+                moveState = manager.makeMove(playerMove, computer , true);
 
                 but = (Button)(getElementFromLayOut((Grid)getElementFromLayOut(Board, playerMove.BigRow, playerMove.BigCol), Math.Abs(playerMove.PosRow), Math.Abs(playerMove.PosCol)));
 

@@ -42,5 +42,11 @@ namespace WpfApplication1.GameLogic
         {
             
         }
+
+        
+        public override string ToString()
+        {
+            return "big -> ( " + BigRow + " , " + BigCol + " ) -> pos ( " + PosRow + " , " + PosCol + " )";
+        }
     }
 }

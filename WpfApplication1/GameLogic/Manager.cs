@@ -28,7 +28,7 @@ namespace WpfApplication1.GameLogic
                 }
         }
 
-        public BoardStatuse makeMove(PlaceInformation box , LittleBoard.PositionOnBoard positionOnBoard)
+        public BoardStatuse makeMove(PlaceInformation box , LittleBoard.PositionOnBoard positionOnBoard , bool print = false)
         {
             int col = Math.Abs(box.PosCol);
             int row = Math.Abs(box.PosRow);
@@ -36,6 +36,19 @@ namespace WpfApplication1.GameLogic
 
             winLose[box.BigRow , box.BigCol] = board[box.BigRow, box.BigCol].makeMove(positionOnBoard, row, col) ?
                                                                             state : BoardStatuse.PROCCES;
+
+            if (print)
+            {
+                Console.WriteLine(box + "\n\n");
+                printTable();
+                int numberOfDotMat;
+                int numberOfDot;
+
+                numberOfDot = numberOfItemOnBoardDebug(computer , out numberOfDotMat);
+                Console.WriteLine("computer has len of " + numberOfDot + " dots and the matrix have " + numberOfDotMat);
+                numberOfDot = numberOfItemOnBoardDebug(player, out numberOfDotMat);
+                Console.WriteLine("player has len of " + numberOfDot + " dots and the matrix have " + numberOfDotMat);
+            }
 
             if (isEnd(state))
                 return positionOnBoard == LittleBoard.PositionOnBoard.PLAYER ? BoardStatuse.ABSULOT_WIN : BoardStatuse.ABSULOT_LOSE;
@@ -207,9 +220,17 @@ namespace WpfApplication1.GameLogic
 
             PlaceInformation toReturn = null;
             setCalculateMode(true);
+            float noneImportents;
+            int numberOfInterval = 5;
             float min = float.MinValue, max = float.MaxValue;
-            toReturn = getNextBestMove(row , col ,min ,max , 3);
 
+            Console.WriteLine("\n\n\n\n\n\n\n\n");
+            printTable();
+
+            toReturn = getNextBestMove(row , col ,min ,max , numberOfInterval, out noneImportents);
+
+            Console.WriteLine("next move score is" + noneImportents);
+            Console.WriteLine(toReturn + "\n");
             if (toReturn.PosCol == -1 || toReturn.PosRow == -1)
                 throw new Exception("here");
 
@@ -227,15 +248,13 @@ namespace WpfApplication1.GameLogic
         private static readonly LittleBoard.PositionOnBoard computer = LittleBoard.PositionOnBoard.COMPUTER;
         private static readonly LittleBoard.PositionOnBoard player   = LittleBoard.PositionOnBoard.PLAYER;
 
-        private PlaceInformation getNextBestMove(int row, int col, float min, float max, int interval)
+        private PlaceInformation getNextBestMove(int row, int col, float min, float max, int interval , out float bestWeigth)
         {
-
-            int rowHelper = 0, colHelper = 0;
             float value = float.MinValue;
-            float temp = 0;
+            PlaceInformation tempPlace;
             PlaceInformation toReturn = new PlaceInformation(row, -1, col, -1);
             Random rand = new Random();
-
+            bestWeigth = 0;
 
             if (board[row, col].Finish)
             {
@@ -246,18 +265,17 @@ namespace WpfApplication1.GameLogic
                     {
                         if (!board[i, j].Finish)
                         {
-                            temp = getNextBestMove(i, j, computer, min, max, interval , ref rowHelper, ref colHelper);
-                            if (temp > value)
+                            tempPlace = getNextBestMove(i, j, min, max, interval , out bestWeigth);
+                            if (bestWeigth > value)
                             {
-                                value = temp;
-                                toReturn.BigRow = i;
-                                toReturn.BigCol = j;
-                                toReturn.PosCol = colHelper;
-                                toReturn.PosRow = rowHelper;
+                                value = bestWeigth;
+                                toReturn = tempPlace;
                             }
                         }
                     }
                 }
+
+                bestWeigth = value;
                 return toReturn;
 
             }
@@ -266,11 +284,13 @@ namespace WpfApplication1.GameLogic
 
             int whereToStart = ((int)(rand.NextDouble() * 50000)) % allPossiblePos.Count;
 
+            float temp;
+
             for(int i = 0; i < allPossiblePos.Count; i++)
             {
                 Position pos = allPossiblePos[(whereToStart + i) % allPossiblePos.Count];
                 makeMove(new PlaceInformation(row, pos.row, col, pos.col), computer);
-                temp = getNextBestMove(pos.row, pos.col, player, min, max, interval - 1 , ref rowHelper , ref colHelper);
+                temp = getNextBestMove(pos.row, pos.col, player, min, max, interval - 1 );
                 if (temp > value)
                 {
                     value = temp;
@@ -279,11 +299,13 @@ namespace WpfApplication1.GameLogic
                 }
                 winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(computer) : BoardStatuse.PROCCES;
             }
-
+            temp = value;
             return toReturn;
         }
 
-        private float getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,float alpha , float beta , int iteration , ref int rowHelper , ref int colhelper)
+
+        float helpForDebug = float.MinValue;
+        private float getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,float alpha , float beta , int iteration)
         {
 
             float valueComputer = float.MinValue;
@@ -293,7 +315,11 @@ namespace WpfApplication1.GameLogic
             if (isEnd(getOpposite(playerToState(posOnBoard))) || iteration == 0)
             {
                 goal = getMarkOfChoice(computer);
-                Console.WriteLine(goal);
+                if (helpForDebug != goal)
+                {
+                    helpForDebug = goal;
+                    //Console.WriteLine(goal);
+                }
                 if (DEBUG)
                 {
                     printTable();
@@ -311,7 +337,7 @@ namespace WpfApplication1.GameLogic
                     {
                         if (winLose[i, j] == BoardStatuse.PROCCES)
                         {
-                            float v = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration , ref rowHelper , ref colhelper);
+                            float v = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration );
                             if (posOnBoard == computer)
                             {
                                 valueComputer = Math.Max(valueComputer, v);
@@ -344,9 +370,6 @@ namespace WpfApplication1.GameLogic
 
             List<Position> allPossibilities = board[row, col].allOptions();
 
-
-            float help;
-
             foreach (Position pos in allPossibilities)
             {
 
@@ -354,17 +377,10 @@ namespace WpfApplication1.GameLogic
 
                 if (posOnBoard == computer)
                 {
-                    help = valueComputer;
-                    valueComputer = Math.Max(valueComputer, getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1, ref rowHelper, ref colhelper));
+                    valueComputer = Math.Max(valueComputer, getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1));
                     alpha = Math.Max(valueComputer, alpha);
                     
                     winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
-
-                    if (help != valueComputer)
-                    {
-                        rowHelper = pos.row;
-                        colhelper = pos.col;
-                    }
 
                     if (beta <= alpha)
                     {
@@ -373,17 +389,10 @@ namespace WpfApplication1.GameLogic
                 }
                 else
                 {
-                    help = valuePlayer;
-                    valuePlayer = Math.Min(valuePlayer, getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1, ref rowHelper, ref colhelper));
+                    valuePlayer = Math.Min(valuePlayer, getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1));
                     beta = Math.Min(beta, valuePlayer);
 
                     winLose[row, col] = board[row, col].goBack(1, false, player) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
-
-                    if (help != valuePlayer)
-                    {
-                        rowHelper = pos.row;
-                        colhelper = pos.col;
-                    }
 
                     if (beta <= alpha)
                     {
@@ -415,6 +424,22 @@ namespace WpfApplication1.GameLogic
                     toPrint += "________________\n";
             }
             Console.WriteLine(toPrint);
+        }
+
+        private int numberOfItemOnBoardDebug(LittleBoard.PositionOnBoard posOnBoard , out int matNumber)
+        {
+            int temp = matNumber = 0;
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    temp += board[i, j].numberOfItemOnBoard(posOnBoard);
+                    if (posOnBoard == computer)
+                        matNumber += board[i, j].LenOfComputerPositionForDebug;
+                    else
+                        matNumber += board[i, j].LenOfPlayerPositionForDebug;
+                }
+
+            return temp;
         }
 
         private BoardStatuse playerToState(LittleBoard.PositionOnBoard pos)
