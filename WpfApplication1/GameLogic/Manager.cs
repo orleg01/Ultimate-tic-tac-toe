@@ -221,7 +221,7 @@ namespace WpfApplication1.GameLogic
             PlaceInformation toReturn = null;
             setCalculateMode(true);
             float noneImportents;
-            int numberOfInterval = 5;
+            int numberOfInterval = 8;
             float min = float.MinValue, max = float.MaxValue;
 
             Console.WriteLine("\n\n\n\n\n\n\n\n");
@@ -318,7 +318,7 @@ namespace WpfApplication1.GameLogic
                 if (helpForDebug < goal)
                 {
                     helpForDebug = goal;
-                    Console.WriteLine(goal);
+                    //Console.WriteLine(goal);
                 }
                 if (DEBUG)
                 {
