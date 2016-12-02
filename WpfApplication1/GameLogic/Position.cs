@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WpfApplication1.GameLogic
 {
-    class Position
+    class Position : ICloneable
     {
         public int row;
         public int col;
@@ -43,6 +43,11 @@ namespace WpfApplication1.GameLogic
             if (pos.row == row && pos.col == col)
                 return true;
             return false;
+        }
+
+        public object Clone()
+        {
+            return new Position(this);
         }
     }
 }

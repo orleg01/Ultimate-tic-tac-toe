@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace WpfApplication1.GameLogic
 {
@@ -17,6 +15,31 @@ namespace WpfApplication1.GameLogic
         private LittleBoard[,] board = new LittleBoard[3,3];
         private BoardStatuse[,] winLose = new BoardStatuse[3, 3];
 
+        private LittleBoard[,] cloneBoard(LittleBoard[,] board)
+        {
+            LittleBoard[,] newBoard = new LittleBoard[3, 3];
+            for(int i = 0; i < 3; i++)
+            {
+                for(int j = 0; j < 3; j++)
+                {
+                    newBoard[i, j] = (LittleBoard)board[i, j].Clone();
+                }
+            }
+            return newBoard;
+        }
+
+        private BoardStatuse[,] cloneWinLose(BoardStatuse[,] winLose)
+        {
+            BoardStatuse[,] newBoard = new BoardStatuse[3, 3];
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    newBoard[i, j] = winLose[i, j];
+                }
+            }
+            return newBoard;
+        }
 
         public Manager()
         {
@@ -28,7 +51,12 @@ namespace WpfApplication1.GameLogic
                 }
         }
 
-        public BoardStatuse makeMove(PlaceInformation box , LittleBoard.PositionOnBoard positionOnBoard , bool print = false)
+        public BoardStatuse makeMove(PlaceInformation box, LittleBoard.PositionOnBoard positionOnBoard, bool print = false)
+        {
+            return makeMove(box, positionOnBoard, board, winLose, print);
+        }
+
+        public BoardStatuse makeMove(PlaceInformation box , LittleBoard.PositionOnBoard positionOnBoard , LittleBoard[,] board , BoardStatuse[,] winLose, bool print = false)
         {
             int col = Math.Abs(box.PosCol);
             int row = Math.Abs(box.PosRow);
@@ -50,7 +78,7 @@ namespace WpfApplication1.GameLogic
                 Console.WriteLine("player has len of " + numberOfDot + " dots and the matrix have " + numberOfDotMat);
             }
 
-            if (isEnd(state))
+            if (isEnd(state,winLose))
                 return positionOnBoard == LittleBoard.PositionOnBoard.PLAYER ? BoardStatuse.ABSULOT_WIN : BoardStatuse.ABSULOT_LOSE;
 
             return winLose[box.BigRow, box.BigCol];
@@ -99,7 +127,7 @@ namespace WpfApplication1.GameLogic
             return toReturn;
         }*/
 
-        private bool boardIsFull()
+        private bool boardIsFull(LittleBoard[,] board)
         {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
@@ -110,7 +138,7 @@ namespace WpfApplication1.GameLogic
 
         public static readonly int APPROXIMATE_WIN_SCORE = 7;
 
-        private int getMarkOfChoice(LittleBoard.PositionOnBoard positionOnBoard)
+        private int getMarkOfChoice(LittleBoard.PositionOnBoard positionOnBoard , LittleBoard[,] board,BoardStatuse[,] winLose)
         {
             const int BIG_BOARD_WEIGHT      = 23;
             const int WIN_SCORE             = 1000000;
@@ -120,7 +148,7 @@ namespace WpfApplication1.GameLogic
             BoardStatuse oppState = getOpposite(state);
             bool winner;
 
-            if (winner = isEnd(state) || isEnd(oppState))
+            if (winner = isEnd(state,winLose) || isEnd(oppState,winLose))
             {
                 int freeCell = 0;
                 for (int i = 0; i < 3; i++)
@@ -130,10 +158,10 @@ namespace WpfApplication1.GameLogic
                 return (winner ? WIN_SCORE + freeCell : -WIN_SCORE - freeCell);
             }
             
-            if (boardIsFull())
+            if (boardIsFull(board))
                 return 0;
 
-            toReturn = getBigBoardScore(state) * BIG_BOARD_WEIGHT;
+            toReturn = getBigBoardScore(state,board,winLose) * BIG_BOARD_WEIGHT;
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
                     if (!board[i, j].isFull())
@@ -151,9 +179,9 @@ namespace WpfApplication1.GameLogic
                                                           {0 , 4 , 8},
                                                           {2 , 4 , 6}};
 
-        public int getBigBoardScore(BoardStatuse state)
+        public int getBigBoardScore(BoardStatuse state ,LittleBoard[,] board,BoardStatuse[,] winLose)
         {
-            if (boardIsFull())
+            if (boardIsFull(board))
                 return 0;
             BoardStatuse opposit = getOpposite(state);
             int check = 0;
@@ -206,7 +234,7 @@ namespace WpfApplication1.GameLogic
             return check - rivial;
         }
 
-        public void setCalculateMode(bool calc)
+        public void setCalculateMode(bool calc , LittleBoard[,] board)
         {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
@@ -219,7 +247,7 @@ namespace WpfApplication1.GameLogic
         {
 
             PlaceInformation toReturn = null;
-            setCalculateMode(true);
+            setCalculateMode(true,board);
             float noneImportents;
             int numberOfInterval = 8;
             float min = float.MinValue, max = float.MaxValue;
@@ -227,14 +255,14 @@ namespace WpfApplication1.GameLogic
             Console.WriteLine("\n\n\n\n\n\n\n\n");
             printTable();
 
-            toReturn = getNextBestMove(row , col ,min ,max , numberOfInterval, out noneImportents);
+            toReturn = getNextBestMove(row , col ,min ,max , numberOfInterval, out noneImportents , board);
 
             Console.WriteLine("next move score is" + noneImportents);
             Console.WriteLine(toReturn + "\n");
             if (toReturn.PosCol == -1 || toReturn.PosRow == -1)
                 throw new Exception("here");
 
-            setCalculateMode(false);
+            setCalculateMode(false,board);
 
             if (board[toReturn.BigRow, toReturn.BigCol].Finish)
             {
@@ -248,7 +276,56 @@ namespace WpfApplication1.GameLogic
         private static readonly LittleBoard.PositionOnBoard computer = LittleBoard.PositionOnBoard.COMPUTER;
         private static readonly LittleBoard.PositionOnBoard player   = LittleBoard.PositionOnBoard.PLAYER;
 
-        private PlaceInformation getNextBestMove(int row, int col, float min, float max, int interval , out float bestWeigth)
+        class ThreadGetNextBestMove
+        {
+            private int i;
+            private Manager manager;
+            private int row, col;
+            private LittleBoard.PositionOnBoard posOnBoard;
+            private float alpha, beta;
+            private int iteration;
+            private LittleBoard[,] board;
+            private BoardStatuse[,] winLose;
+            float[] maxValue;
+            PlaceInformation toReturn;
+
+            public ThreadGetNextBestMove(int i ,Manager manager, int row, int col, LittleBoard.PositionOnBoard posOnBoard, float alpha, float beta, int iteration, LittleBoard[,] board, BoardStatuse[,] winLose,float[] maxValue, PlaceInformation toReturn)
+            {
+                this.i = i;
+                this.manager = manager;
+                this.row = row;
+                this.col = col;
+                this.posOnBoard = posOnBoard;
+                this.alpha = alpha;
+                this.beta = beta;
+                this.iteration = iteration;
+                this.board = board;
+                this.winLose = winLose;
+                this.maxValue = maxValue;
+                this.toReturn = toReturn;
+            }
+
+            public void run()
+            {
+                float maxValueiter;
+                maxValueiter = manager.getNextBestMove(row, col, posOnBoard, alpha, beta, iteration, board, winLose);
+                Console.WriteLine(i + ". is : " + maxValueiter);
+                lock (maxValue)
+                {
+                    lock(toReturn)
+                    {
+                        if (maxValue[0] < maxValueiter)
+                        {
+                            maxValue[0] = maxValueiter;
+                            toReturn.PosRow = row;
+                            toReturn.PosCol = col;
+                        }
+                    }
+                }
+            }
+        }
+
+        private PlaceInformation getNextBestMove(int row, int col, float min, float max, int interval , out float bestWeigth , LittleBoard[,] board)
         {
             float value = float.MinValue;
             PlaceInformation tempPlace;
@@ -265,7 +342,7 @@ namespace WpfApplication1.GameLogic
                     {
                         if (!board[i, j].Finish)
                         {
-                            tempPlace = getNextBestMove(i, j, min, max, interval , out bestWeigth);
+                            tempPlace = getNextBestMove(i, j, min, max, interval , out bestWeigth,board);
                             if (bestWeigth > value)
                             {
                                 value = bestWeigth;
@@ -283,38 +360,41 @@ namespace WpfApplication1.GameLogic
             List<Position> allPossiblePos  = board[row, col].allOptions();
 
             int whereToStart = ((int)(rand.NextDouble() * 50000)) % allPossiblePos.Count;
-
-            float temp; 
+            float[] maxValue = new float[1];
+            maxValue[0] = value;
+            float temp;
+            Thread[] allThreads = new Thread[allPossiblePos.Count];
             for(int i = 0; i < allPossiblePos.Count; i++)
             {
                 Position pos = allPossiblePos[(whereToStart + i) % allPossiblePos.Count];
-                makeMove(new PlaceInformation(row, pos.row, col, pos.col), computer);
-                temp = getNextBestMove(pos.row, pos.col, player, min, max, interval - 1 );
-                Console.WriteLine(i + ". is : " + temp);
-                if (temp > value)
-                {
-                    value = temp;
-                    toReturn.PosRow = pos.row;
-                    toReturn.PosCol = pos.col;
-                }
-                winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(computer) : BoardStatuse.PROCCES;
+                LittleBoard[,] newBoard = cloneBoard(board);
+                BoardStatuse[,] newWinLose = cloneWinLose(winLose);
+                makeMove(new PlaceInformation(row, pos.row, col, pos.col),computer, newBoard,newWinLose);
+                ThreadGetNextBestMove getBestMove = new ThreadGetNextBestMove(i, this, pos.row, pos.col, player, min, max, interval - 1, newBoard, newWinLose, maxValue, toReturn);
+                allThreads[i] = new Thread(new ThreadStart(getBestMove.run));
+                allThreads[i].Start();
             }
+            for (int i = 0; i < allPossiblePos.Count; i++)
+            {
+                allThreads[i].Join();
+            }
+            value = maxValue[0];
             bestWeigth = value;
             return toReturn;
         }
 
 
         float helpForDebug = float.MinValue;
-        private float getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,float alpha , float beta , int iteration)
+        private float getNextBestMove(int row , int col , LittleBoard.PositionOnBoard posOnBoard ,float alpha , float beta , int iteration , LittleBoard[,] board,BoardStatuse[,] winLose)
         {
 
             float valueComputer = float.MinValue;
             float valuePlayer   = float.MaxValue;
             float goal;
 
-            if (isEnd(getOpposite(playerToState(posOnBoard))) || isEnd(playerToState(posOnBoard)) || iteration == 0)
+            if (isEnd(getOpposite(playerToState(posOnBoard)),winLose) || isEnd(playerToState(posOnBoard),winLose) || iteration == 0)
             {
-                goal = getMarkOfChoice(computer);
+                goal = getMarkOfChoice(computer,board,winLose);
                 if (helpForDebug < goal)
                 {
                     helpForDebug = goal;
@@ -337,7 +417,7 @@ namespace WpfApplication1.GameLogic
                     {
                         if (winLose[i, j] == BoardStatuse.PROCCES)
                         {
-                            float v = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration );
+                            float v = getNextBestMove(i, j, posOnBoard, alpha, beta, iteration ,board,winLose);
                             if (posOnBoard == computer)
                             {
                                 valueComputer = Math.Max(valueComputer, v);
@@ -373,11 +453,11 @@ namespace WpfApplication1.GameLogic
             foreach (Position pos in allPossibilities)
             {
 
-                makeMove(new PlaceInformation(row, pos.row, col, pos.col) , posOnBoard);
+                makeMove(new PlaceInformation(row, pos.row, col, pos.col) , posOnBoard,board,winLose);
 
                 if (posOnBoard == computer)
                 {
-                    valueComputer = Math.Max(valueComputer, getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1));
+                    valueComputer = Math.Max(valueComputer, getNextBestMove(pos.row, pos.col, player, alpha, beta, iteration - 1,board,winLose));
                     alpha = Math.Max(valueComputer, alpha);
                     
                     winLose[row, col] = board[row, col].goBack(1, false, computer) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
@@ -389,7 +469,7 @@ namespace WpfApplication1.GameLogic
                 }
                 else
                 {
-                    valuePlayer = Math.Min(valuePlayer, getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1));
+                    valuePlayer = Math.Min(valuePlayer, getNextBestMove(pos.row, pos.col, computer, alpha, beta, iteration - 1,board,winLose));
                     beta = Math.Min(beta, valuePlayer);
 
                     winLose[row, col] = board[row, col].goBack(1, false, player) ? playerToState(posOnBoard) : BoardStatuse.PROCCES;
@@ -462,7 +542,7 @@ namespace WpfApplication1.GameLogic
             throw new Exception("cannot convert this kind of BoardStatuse enum!");
         }
 
-        private bool isEnd(BoardStatuse state)
+        private bool isEnd(BoardStatuse state,BoardStatuse[,] winLose)
         {
             for (int i = 0; i < winingPosability.GetLength(0); i++)
             {
@@ -472,10 +552,10 @@ namespace WpfApplication1.GameLogic
                     return true;
             }
 
-            return boardIsFull();
+            return boardIsFull(board);
         }
 
-        private List<Position> lastMove(BoardStatuse pos)
+        private List<Position> lastMove(BoardStatuse pos, BoardStatuse[,] winLose)
         {
             List<Position> winOpertunity = new List<Position>();
 
@@ -514,7 +594,7 @@ namespace WpfApplication1.GameLogic
             return winOpertunity;
         }
 
-        public bool PositionIsGood(int row, int col)
+        public bool PositionIsGood(int row, int col , LittleBoard[,] board)
         {
             return !board[row, col].Finish;
         }

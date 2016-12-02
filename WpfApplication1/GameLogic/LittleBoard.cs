@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace WpfApplication1.GameLogic
 {
-    class LittleBoard
+    class LittleBoard : ICloneable
     {
         public enum PositionOnBoard { NONE = 1 , PLAYER = 2 , COMPUTER = 4 , TEMP_PLAYER = 8 , TEMP_COMPUTER = 16};
 
@@ -336,6 +336,30 @@ namespace WpfApplication1.GameLogic
         public bool isFull()
         {
             return numberOfItemOnBoard(PositionOnBoard.NONE) == 0;
+        }
+
+        public object Clone()
+        {
+            LittleBoard newLittleBoard = new LittleBoard();
+            newLittleBoard.board = new PositionOnBoard[3,3];
+            for(int i = 0; i < 3; i++)
+            {
+                for(int j = 0; j < 3; j++)
+                {
+                    newLittleBoard.board[i, j] = board[i, j];
+                }
+            }
+            
+            foreach (Position pos in computerPosition)
+                newLittleBoard.computerPosition.Add((Position)pos.Clone());
+            foreach (Position pos in playerPosition)
+                newLittleBoard.playerPosition.Add((Position)pos.Clone());
+
+            newLittleBoard.Finish = Finish;
+            newLittleBoard.WhoWon = WhoWon;
+            newLittleBoard.calculate = calculate;
+
+            return newLittleBoard;
         }
     }
 }
