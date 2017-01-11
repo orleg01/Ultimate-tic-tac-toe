@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/WpfApplication1/v14/.suo
+/WpfApplication1/obj/Debug/MainWindow.baml
